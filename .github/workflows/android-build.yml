@@ -38,8 +38,9 @@ jobs:
       - name: Build Debug APK
         run: gradle assembleDebug
 
-      - name: Upload javis APK
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: jarvis-apk
-          path: app/build/outputs/apk/debug/app-javis.apk
+          path: app/build/outputs/apk/debug/*.apk
+
