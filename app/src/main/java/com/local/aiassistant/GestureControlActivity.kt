@@ -1,5 +1,6 @@
 package com.local.aiassistant
 
+import androidx.compose.ui.unit.dp
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
