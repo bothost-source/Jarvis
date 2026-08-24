@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">AI Assistant</string>
+    <string name="accessibility_service_description">Lets AI Assistant open apps, tap, swipe, and read on-screen content on your behalf, so you can control your phone hands-free with gestures or automation rules.</string>
+</resources>
