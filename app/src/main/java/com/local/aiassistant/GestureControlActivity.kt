@@ -1,6 +1,5 @@
 package com.local.aiassistant
 
-import androidx.compose.ui.unit.dp
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
@@ -22,19 +22,6 @@ import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
 import java.util.concurrent.Executors
 import kotlin.math.hypot
 
-/**
- * Touchless control: the phone's own camera watches your hand in the air.
- * We don't touch the screen at all — MediaPipe gives us 21 3D landmarks per
- * hand every frame, and we turn a few of those into gestures:
- *
- *   - Index finger moves in the air  -> cursor-style tap position tracks it
- *   - Thumb tip + index tip pinch together -> "tap" at that tracked position
- *   - Open palm swipes left/right   -> swipe left/right (e.g. change app / scroll)
- *   - Fist held for ~1s             -> go Home
- *
- * All processing happens on-device (MediaPipe Tasks Vision), nothing is
- * uploaded anywhere.
- */
 class GestureControlActivity : ComponentActivity() {
 
     private var handLandmarker: HandLandmarker? = null
@@ -75,12 +62,6 @@ class GestureControlActivity : ComponentActivity() {
 
     private var statusUpdater: (String) -> Unit = {}
 
-    /**
-     * NOTE: This requires the "hand_landmarker.task" model file bundled in
-     * app/src/main/assets/. Download it once from Google's model repo:
-     * https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task
-     * and drop it into app/src/main/assets/hand_landmarker.task before building.
-     */
     private fun setupHandLandmarker() {
         try {
             val baseOptions = BaseOptions.builder()
@@ -114,11 +95,13 @@ class GestureControlActivity : ComponentActivity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
+    // FIXED: Use MediaImageBuilder instead of BitmapImageBuilder
     private fun analyzeFrame(image: ImageProxy) {
         val timestampMs = System.currentTimeMillis()
         try {
-            val mpImage = com.google.mediapipe.framework.image.BitmapImageBuilder(
-                image.toBitmap()
+            val mediaImage = image.image ?: return
+            val mpImage = com.google.mediapipe.framework.image.MediaImageBuilder(
+                mediaImage
             ).build()
             handLandmarker?.detectAsync(mpImage, timestampMs)
         } catch (e: Exception) {
@@ -128,7 +111,6 @@ class GestureControlActivity : ComponentActivity() {
         }
     }
 
-    /** Landmark indices per MediaPipe Hands spec: 4 = thumb tip, 8 = index fingertip. */
     private fun onHandResult(result: HandLandmarkerResult, input: com.google.mediapipe.framework.image.MPImage) {
         val landmarks = result.landmarks().firstOrNull() ?: return
         if (landmarks.size < 9) return
@@ -149,7 +131,6 @@ class GestureControlActivity : ComponentActivity() {
             return
         }
 
-        // Pinch = tap
         if (pinchDistance < 0.05 && !pinchActive) {
             pinchActive = true
             service.tap(screenX.toFloat(), screenY.toFloat())
