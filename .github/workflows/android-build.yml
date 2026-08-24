@@ -22,20 +22,22 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      # Install Gradle directly (no wrapper needed)
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
+
       - name: Download MediaPipe model
         run: |
           mkdir -p app/src/main/assets
           curl -L -o app/src/main/assets/hand_landmarker.task \
             https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task
 
-      # FIX: Make gradlew executable (GitHub web upload strips permissions)
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-
+      # Build using gradle command directly (no ./gradlew)
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: gradle assembleDebug
 
-      # Upload APK for download
       - name: Upload javis APK
         uses: actions/upload-artifact@v4
         with:
